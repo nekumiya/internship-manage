@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guet.internship.dao.DocumentDao">
+    <resultMap id="documentMap" type="com.guet.internship.mbg.model.Document" autoMapping="true">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="document_type" property="documentType" jdbcType="VARCHAR"/>
+        <result column="document_category" property="documentCategory" jdbcType="INTEGER"/>
+        <result column="upload_time" property="uploadTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="path" property="path" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="student_id" property="studentId" jdbcType="VARCHAR"/>
+        <result column="admin_id" property="adminId" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="selectApplication" parameterType="com.guet.internship.condition.DocumentCondition" resultType="com.guet.internship.mbg.model.Document">
+        SELECT
+            id,title,description,document_type,document_category,upload_time,update_time,path,status,student_id,admin_id
+        FROM
+            document
+        WHERE
+            admin_id = #{adminId}
+            AND document_category = #{documentCategory}
+            AND id IN (
+                        SELECT
+                            MAX( id )
+                        FROM
+                            document
+                        GROUP BY student_id
+                      )
+    </select>
+
+    <select id="selectDocumentsByStudentId" parameterType="java.lang.String" resultType="com.guet.internship.mbg.model.Document">
+        SELECT
+            id,title,description,document_type,document_category,upload_time,update_time,path,status,student_id,admin_id
+        FROM
+            document
+        WHERE
+             id IN (
+                    SELECT
+                        MAX( id )
+                    FROM
+                        document
+                    WHERE
+                        student_id = #{studentId}
+                    GROUP BY document_category
+                  )
+    </select>
+
+</mapper>

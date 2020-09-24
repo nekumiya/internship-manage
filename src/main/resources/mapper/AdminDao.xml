@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guet.internship.dao.AdminDao">
+
+
+    <select id="login" parameterType="com.guet.internship.mbg.model.Admin" resultType="com.guet.internship.mbg.model.Admin">
+        SELECT * FROM admin WHERE account = #{account} AND password = #{password}
+    </select>
+
+    <select id="getAdminByUsername" parameterType="java.lang.String" resultType="com.guet.internship.mbg.model.Admin">
+        SELECT * FROM admin WHERE name = #{username}
+    </select>
+
+</mapper>
