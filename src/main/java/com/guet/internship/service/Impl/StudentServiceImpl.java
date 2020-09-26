@@ -5,6 +5,7 @@ import com.github.pagehelper.PageHelper;
 import com.guet.internship.common.utils.JwtTokenUtil;
 import com.guet.internship.common.utils.StringsUtils;
 import com.guet.internship.condition.*;
+import com.guet.internship.dto.CommonUserDetails;
 import com.guet.internship.mbg.mapper.*;
 import com.guet.internship.mbg.model.*;
 import com.guet.internship.mbg.model.Class;
@@ -12,7 +13,9 @@ import com.guet.internship.service.StudentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -65,7 +68,22 @@ public class StudentServiceImpl implements StudentService {
     private NoticeMapper noticeMapper;
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private AdminMapper adminMapper;
+
+//    @Autowired
+//    private UserDetailsService userDetailsService;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+
+
+    @Autowired
+    @Qualifier("studentDetailsService")
+    private UserDetailsService studentDetailsService;
+    @Autowired
+    @Qualifier("adminDetailsService")
+    private UserDetailsService adminDetailsService;
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
@@ -99,12 +117,17 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public String login(String account, String password) {
+    public String login(String account, String password, String userType) {
         String token = null;
-
+        UserDetails userDetails = null;
         try {
-            Student student = studentMapper.selectByPrimaryKey(account);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(student.getName());
+            if (userType.equals(CommonUserDetails.STUDENT_CLASS_TYPE_CODE) || userType.equals(CommonUserDetails.STUDENT_INTERNSHIP_TYPE_CODE)){
+                Student student = studentMapper.selectByPrimaryKey(account);
+                userDetails = studentDetailsService.loadUserByUsername(student.getName());
+            } else if(userType.equals(CommonUserDetails.ADMIN_TYPE_CODE)) {
+                Admin admin = adminMapper.selectByPrimaryKey(account);
+                userDetails = adminDetailsService.loadUserByUsername(admin.getName());
+            }
 
             //这里暂时不对密码进行加密校验
 //            if (!passwordEncoder.matches(password,userDetails.getPassword())){

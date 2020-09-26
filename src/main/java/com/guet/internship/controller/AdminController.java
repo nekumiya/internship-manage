@@ -3,6 +3,7 @@ package com.guet.internship.controller;
 import com.guet.internship.common.api.CommonPage;
 import com.guet.internship.common.api.CommonResult;
 import com.guet.internship.condition.*;
+import com.guet.internship.dto.CommonUserDetails;
 import com.guet.internship.dto.UserLoginParam;
 import com.guet.internship.mbg.model.*;
 import com.guet.internship.mbg.model.Class;
@@ -17,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -28,10 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by 欲隐君。 on 2020/8/20
@@ -65,16 +65,17 @@ public class AdminController {
             return CommonResult.validateFailed("用户名或密码为空");
         }
 
-        Admin admin = adminService.login(userLoginParam.getAccount(), userLoginParam.getPassword());
+        String token = adminService.login(userLoginParam.getAccount(), userLoginParam.getPassword(),userLoginParam.getUserType());
 
-        if (admin == null){
+        if (token == null){
             return  CommonResult.validateFailed("用户名或密码错误！！！");
         }
 
-        HashMap<String, Admin> adminMap = new HashMap<>();
-        adminMap.put("admin",admin);
+        HashMap<String, String> tokenMap = new HashMap<>();
+        tokenMap.put("token",token);
+        tokenMap.put("tokenHead",tokenHead);
 
-        return CommonResult.success(adminMap,"登录成功！！！");
+        return CommonResult.success(tokenMap,"登录成功！！！");
 
     }
 
@@ -82,10 +83,9 @@ public class AdminController {
     @ApiOperation("根据账号查询个人资料")
     @RequestMapping(value = "/personal.do",method = RequestMethod.POST)
     @ResponseBody
-    public CommonResult getPersonal( @RequestParam("account") String account){
-        if (account == null || account.equals("0") ){
-            return CommonResult.failed("传入的用户ID为空");
-        }
+    public CommonResult getPersonal(){
+
+        String account = getCommonUserDetails().getAccount();
 
         Admin admin = adminService.getAdminByAccount(account);
 
@@ -95,10 +95,11 @@ public class AdminController {
 
 
     @ApiOperation("修改个人资料")
-    @RequestMapping(value = "/modify.do/{account}",method = RequestMethod.POST)
+    @RequestMapping(value = "/modify.do",method = RequestMethod.POST)
     @ResponseBody
-    public CommonResult updatePersonal( @PathVariable("account") String account, @RequestBody Admin admin){
+    public CommonResult updatePersonal( @RequestBody Admin admin){
         CommonResult commonResult;
+        String account = getCommonUserDetails().getAccount();
         Integer count = adminService.updatePersonal(account, admin);
 
         if (count == 1) {
@@ -115,9 +116,10 @@ public class AdminController {
 
 
     @ApiOperation("导入学生名单，文件格式必须是 .xl 或 .xlsx")
-    @RequestMapping(value = "/excelImport.do/{account}",method = RequestMethod.POST)
+    @RequestMapping(value = "/excelImport.do",method = RequestMethod.POST)
     @ResponseBody
-    public CommonResult uploadExc(@PathVariable("account")String account, @RequestParam("file")MultipartFile file) throws IOException {
+    public CommonResult uploadExc(@RequestParam("file")MultipartFile file) throws IOException {
+        String account = getCommonUserDetails().getAccount();
         if (file.isEmpty()){
             return CommonResult.failed("文件为空!");
         }
@@ -191,10 +193,11 @@ public class AdminController {
 
 
     @ApiOperation("按年级新建自主实习")
-    @RequestMapping(value = "/createInternship.do/{account}",method = RequestMethod.POST)
+    @RequestMapping(value = "/createInternship.do",method = RequestMethod.POST)
     @ResponseBody
-    public CommonResult createInternship(@PathVariable("account")String account,@RequestBody Internship internship){
+    public CommonResult createInternship(@RequestBody Internship internship){
         CommonResult commonResult;
+        String account = getCommonUserDetails().getAccount();
         internship.setAdminId(account);
         Integer count = adminService.createInternship(internship);
 
@@ -209,10 +212,11 @@ public class AdminController {
     }
 
     @ApiOperation("新建实习班级")
-    @RequestMapping(value = "/createClass.do/{account}",method = RequestMethod.POST)
+    @RequestMapping(value = "/createClass.do",method = RequestMethod.POST)
     @ResponseBody
-    public CommonResult createClass(@PathVariable("account")String account,@RequestBody Class classes){
+    public CommonResult createClass(@RequestBody Class classes){
         CommonResult commonResult;
+        String account = getCommonUserDetails().getAccount();
         classes.setAdminId(account);
         Integer count = adminService.createClass(classes);
 
@@ -361,10 +365,11 @@ public class AdminController {
     }
 
     @ApiOperation("新增学生信息")
-    @RequestMapping(value = "/createStudent.do/{account}",method = RequestMethod.POST)
+    @RequestMapping(value = "/createStudent.do",method = RequestMethod.POST)
     @ResponseBody
-    public CommonResult createStudent(@PathVariable("account")String account,@RequestBody Student student){
+    public CommonResult createStudent(@RequestBody Student student){
         CommonResult commonResult;
+        String account = getCommonUserDetails().getAccount();
         student.setAdminId(account);
         Integer count = adminService.createStudent(student);
         if (count == 1) {
@@ -459,11 +464,12 @@ public class AdminController {
     }
 
     @ApiOperation("发布通知")
-    @RequestMapping(value = "/publish.do/{account}",method = RequestMethod.POST)
+    @RequestMapping(value = "/publish.do",method = RequestMethod.POST)
     @ResponseBody
-    public CommonResult publish(@PathVariable("account")String account, @RequestBody Notice notice){
+    public CommonResult publish(@RequestBody Notice notice){
 
         CommonResult commonResult;
+        String account = getCommonUserDetails().getAccount();
         notice.setSendDate(new Date());
         notice.setAdminId(account);
         Integer count =  adminService.createNotice(notice);
@@ -489,5 +495,21 @@ public class AdminController {
         }
 
         return commonResult;
+    }
+
+
+    private static CommonUserDetails getCommonUserDetails(){
+        CommonUserDetails commonUserDetails = null;
+        //获取用户认证信息对象
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        // 认证信息可能为空，因此需要进行判断。
+        if (Objects.nonNull(authentication)) {
+            Object principal = authentication.getPrincipal();
+
+            if (principal instanceof CommonUserDetails){
+                commonUserDetails = (CommonUserDetails) principal;
+            }
+        }
+        return commonUserDetails;
     }
 }

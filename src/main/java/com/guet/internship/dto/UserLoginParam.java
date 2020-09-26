@@ -19,6 +19,18 @@ public class UserLoginParam {
     @NotEmpty(message = "用户密码不能为空")
     private String password;
 
+    @ApiModelProperty(value = "用户登录类型", required = true)
+    @NotEmpty(message = "用户登录类型不能为空")
+    private String userType;
+
+    public String getUserType() {
+        return userType;
+    }
+
+    public void setUserType(String userType) {
+        this.userType = userType;
+    }
+
     public String getAccount() {
         return account;
     }
@@ -40,6 +52,7 @@ public class UserLoginParam {
         return "UserLoginParam{" +
                 "account='" + account + '\'' +
                 ", password='" + password + '\'' +
+                ", userType='" + userType + '\'' +
                 '}';
     }
 }

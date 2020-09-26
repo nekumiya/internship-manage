@@ -4,6 +4,7 @@ package com.guet.internship.common.utils;
  * Created by 欲隐君。 on 2020/6/19
  */
 
+import com.guet.internship.dto.CommonUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -96,6 +97,41 @@ public class JwtTokenUtil {
     }
 
     /**
+     * 从令牌中获取用户类型
+     *
+     * @param token 令牌
+     * @return 用户类型
+     */
+    public String getUserTypeFromToken(String token) {
+        String userType;
+        try {
+            Claims claims = getClaimsFromToken(token);
+            userType = (String) claims.get("userType");
+        } catch (Exception e) {
+            userType = null;
+        }
+        return userType;
+    }
+
+
+    /**
+     * 从令牌中获取用户Id
+     *
+     * @param token 令牌
+     * @return 用户Id
+     */
+    public String getAccountFromToken(String token) {
+        String account;
+        try {
+            Claims claims = getClaimsFromToken(token);
+            account = (String) claims.get("account");
+        } catch (Exception e) {
+            account = null;
+        }
+        return account;
+    }
+
+    /**
      * 验证token是否还有效
      *
      * @param token       客户端传入的token
@@ -127,8 +163,11 @@ public class JwtTokenUtil {
      */
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put(CLAIM_KEY_USERNAME, userDetails.getUsername());
+        CommonUserDetails commonUserDetails = (CommonUserDetails) userDetails;
+        claims.put(CLAIM_KEY_USERNAME, commonUserDetails.getUsername());
         claims.put(CLAIM_KEY_CREATED, new Date());
+        claims.put("userType",commonUserDetails.getUserType());
+        claims.put("account",commonUserDetails.getAccount());
         return generateToken(claims);
     }
 

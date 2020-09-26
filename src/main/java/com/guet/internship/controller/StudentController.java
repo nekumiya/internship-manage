@@ -3,7 +3,7 @@ package com.guet.internship.controller;
 import com.guet.internship.common.api.CommonPage;
 import com.guet.internship.common.api.CommonResult;
 import com.guet.internship.condition.*;
-import com.guet.internship.dto.StudentUserDetails;
+import com.guet.internship.dto.CommonUserDetails;
 import com.guet.internship.dto.UserLoginParam;
 import com.guet.internship.mbg.model.*;
 import com.guet.internship.mbg.model.Class;
@@ -59,7 +59,7 @@ public class StudentController {
             return CommonResult.validateFailed("用户名或密码为空");
         }
 
-        String token = studentService.login(userLoginParam.getAccount(), userLoginParam.getPassword());
+        String token = studentService.login(userLoginParam.getAccount(), userLoginParam.getPassword(),userLoginParam.getUserType());
 
         if (token == null){
             return  CommonResult.validateFailed("用户名或密码错误！！！");
@@ -78,7 +78,7 @@ public class StudentController {
     @ResponseBody
     public CommonResult getPersonal(){
 
-        String account = getStudentUserDetails().getStudent().getAccount();
+        String account = getCommonUserDetails().getAccount();
         Student student = studentService.getStudentByAccount(account);
 
         return CommonResult.success(student);
@@ -90,7 +90,7 @@ public class StudentController {
     @ResponseBody
     public CommonResult updatePersonal(@RequestBody Student student){
         CommonResult commonResult;
-        String account = getStudentUserDetails().getStudent().getAccount();
+        String account = getCommonUserDetails().getAccount();
         Integer count = studentService.updatePersonal(account, student);
 
         if (count == 1) {
@@ -110,7 +110,7 @@ public class StudentController {
     @ResponseBody
     public CommonResult selectIdentify(@RequestBody Student student){
         CommonResult commonResult;
-        String account = getStudentUserDetails().getStudent().getAccount();
+        String account = getCommonUserDetails().getAccount();
         int count = studentService.updateStudent(account, student);
         if (count == 1) {
             commonResult = CommonResult.success(student);
@@ -153,7 +153,7 @@ public class StudentController {
     @ResponseBody
     public CommonResult selectInternship( @RequestBody Student student){
         CommonResult commonResult;
-        String account = getStudentUserDetails().getStudent().getAccount();
+        String account = getCommonUserDetails().getAccount();
         int count = studentService.updateStudent(account, student);
         if (count == 1) {
             commonResult = CommonResult.success(student);
@@ -170,7 +170,7 @@ public class StudentController {
     @RequestMapping(value = "/showHealthyData.do",method = RequestMethod.POST)
     @ResponseBody
     public CommonResult showHealthyData(){
-        String account = getStudentUserDetails().getStudent().getAccount();
+        String account = getCommonUserDetails().getAccount();
         HealthyReport healthyReport = studentService.selectHealthyData(account);
         return CommonResult.success(healthyReport,"操作成功");
     }
@@ -196,7 +196,7 @@ public class StudentController {
     @ResponseBody
     public CommonResult sign(){
         CommonResult commonResult;
-        String account = getStudentUserDetails().getStudent().getAccount();
+        String account = getCommonUserDetails().getAccount();
         int count = studentService.insertSign(account);
         if (count == 1){
             commonResult = CommonResult.success("操作成功");
@@ -225,7 +225,7 @@ public class StudentController {
     public CommonResult uploadFile(@RequestParam("file") MultipartFile file, Document document){
         CommonResult commonResult;
 
-        String account = getStudentUserDetails().getStudent().getAccount();
+        String account = getCommonUserDetails().getAccount();
         document.setStudentId(account);
         if (file.isEmpty()){
             return CommonResult.failed("上传失败，给文件为空！！！");
@@ -287,19 +287,19 @@ public class StudentController {
     }
 
 
-    private static StudentUserDetails  getStudentUserDetails(){
-        StudentUserDetails studentUserDetails = null;
+    private static CommonUserDetails getCommonUserDetails(){
+        CommonUserDetails commonUserDetails = null;
         //获取用户认证信息对象
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         // 认证信息可能为空，因此需要进行判断。
         if (Objects.nonNull(authentication)) {
             Object principal = authentication.getPrincipal();
 
-            if (principal instanceof StudentUserDetails){
-                studentUserDetails = (StudentUserDetails) principal;
+            if (principal instanceof CommonUserDetails){
+                commonUserDetails = (CommonUserDetails) principal;
             }
         }
-        return studentUserDetails;
+        return commonUserDetails;
     }
 
 }

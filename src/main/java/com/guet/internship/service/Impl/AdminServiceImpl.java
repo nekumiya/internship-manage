@@ -1,11 +1,11 @@
 package com.guet.internship.service.Impl;
 
-import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.guet.internship.common.utils.JwtTokenUtil;
 import com.guet.internship.common.utils.StringsUtils;
 import com.guet.internship.condition.*;
 import com.guet.internship.dao.DocumentDao;
+import com.guet.internship.dto.CommonUserDetails;
 import com.guet.internship.mbg.mapper.*;
 import com.guet.internship.mbg.model.*;
 import com.guet.internship.mbg.model.Class;
@@ -14,7 +14,15 @@ import com.guet.internship.service.AdminService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -66,8 +74,20 @@ public class AdminServiceImpl implements AdminService {
     @Autowired
     private AcceptMapper acceptMapper;
 
+//    @Autowired
+//    private UserDetailsService userDetailsService;
+
     @Autowired
-    private UserDetailsService userDetailsService;
+    private AuthenticationManager authenticationManager;
+
+
+
+    @Autowired
+    @Qualifier("studentDetailsService")
+    private UserDetailsService studentDetailsService;
+    @Autowired
+    @Qualifier("adminDetailsService")
+    private UserDetailsService adminDetailsService;
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
@@ -101,18 +121,50 @@ public class AdminServiceImpl implements AdminService {
         return adminMapper.selectByPrimaryKey(account);
     }
 
+//    @Override
+//    public Admin login(String account, String password, String userType) {
+//        Admin admin = adminMapper.selectByPrimaryKey(account);
+//        if (admin == null){
+//            return null;
+//        }
+//
+//        if(!password.equals(admin.getPassword())){
+//            return null;
+//        }
+//
+//        return admin;
+//    }
+
     @Override
-    public Admin login(String account, String password) {
-        Admin admin = adminMapper.selectByPrimaryKey(account);
-        if (admin == null){
-            return null;
-        }
+    public String login(String account, String password, String userType) {
+        String token = null;
+        UserDetails userDetails = null;
+        try {
+            if (userType.equals(CommonUserDetails.STUDENT_CLASS_TYPE_CODE) || userType.equals(CommonUserDetails.STUDENT_INTERNSHIP_TYPE_CODE)){
+                Student student = studentMapper.selectByPrimaryKey(account);
+                userDetails = studentDetailsService.loadUserByUsername(student.getName());
+            } else if(userType.equals(CommonUserDetails.ADMIN_TYPE_CODE)) {
+                Admin admin = adminMapper.selectByPrimaryKey(account);
+                userDetails = adminDetailsService.loadUserByUsername(admin.getName());
+            }
 
-        if(!password.equals(admin.getPassword())){
-            return null;
-        }
+            //这里暂时不对密码进行加密校验
+//            if (!passwordEncoder.matches(password,userDetails.getPassword())){
+//                throw new BadCredentialsException("密码错误！！！");
+//            }
 
-        return admin;
+            if(!password.equals(userDetails.getPassword())){
+                throw new BadCredentialsException("密码错误！！！");
+            }
+
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            token = jwtTokenUtil.generateToken(userDetails);
+        }catch (AuthenticationException e){
+
+            LOGGER.warn("登录异常:{}",e.getMessage());
+        }
+        return token;
     }
 
     @Override

@@ -3,14 +3,16 @@ package com.guet.internship.config;
 import com.guet.internship.component.JwtAuthenticationTokenFilter;
 import com.guet.internship.component.RestAuthenticationEntryPoint;
 import com.guet.internship.component.RestfulAccessDeniedHandler;
-import com.guet.internship.dto.StudentUserDetails;
-import com.guet.internship.mbg.model.Student;
+import com.guet.internship.provider.AdminAuthenticationProvider;
+import com.guet.internship.provider.StudentAuthenticationProvider;
 import com.guet.internship.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -37,10 +39,64 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
 //    private UserDetailsService userDetailsService;
 
     @Autowired
+    @Qualifier("studentDetailsService")
+    private UserDetailsService studentDetailsService;
+    @Autowired
+    @Qualifier("adminDetailsService")
+    private UserDetailsService adminDetailsService;
+
+    @Autowired
     private RestfulAccessDeniedHandler restfulAccessDeniedHandler;
 
     @Autowired
     private RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+
+
+
+    /**
+     * 注入StudentAuthenticationProvider
+     * @return
+     */
+    @Bean("StudentAuthenticationProvider")
+    DaoAuthenticationProvider daoStudentAuthenticationProvider(){
+        return new StudentAuthenticationProvider(passwordEncoder(), studentDetailsService);
+    }
+
+    /**
+     * 注入UserAuthenticationProvider
+     * @return
+     */
+    @Bean("AdminAuthenticationProvider")
+    DaoAuthenticationProvider daoAdminAuthenticationProvider(){
+        return new AdminAuthenticationProvider(passwordEncoder(), adminDetailsService);
+    }
+
+
+    /**
+     * 向AuthenticationManager添加Provider
+     * @return
+     */
+    @Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth){
+        auth.authenticationProvider(daoStudentAuthenticationProvider());
+        auth.authenticationProvider(daoAdminAuthenticationProvider());
+    }
+
+
+    @Autowired
+    public void configureAuthentication(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
+        authenticationManagerBuilder.userDetailsService(this.studentDetailsService).passwordEncoder(passwordEncoder());
+    }
+
+
+    /**
+     * 注入AuthenticationManager
+     * @return
+     */
+    @Bean
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
+    }
 
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
@@ -61,7 +117,7 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
                         "/v2/api-docs/**"
                 )
                 .permitAll()
-                .antMatchers("/admin/**", "/student/login.do")// 对登录注册要允许匿名访问
+                .antMatchers("/admin/login.do", "/student/login.do")// 对登录注册要允许匿名访问
                 .permitAll()
                 .antMatchers(HttpMethod.OPTIONS)//跨域请求会先进行一次options请求
                 .permitAll()
@@ -79,11 +135,11 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
                 .authenticationEntryPoint(restAuthenticationEntryPoint);
     }
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService())
-                .passwordEncoder(passwordEncoder());
-    }
+//    @Override
+//    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+//        auth.userDetailsService(userDetailsService())
+//                .passwordEncoder(passwordEncoder());
+//    }
 
     //密码编码器(与用户输入的密码进行比对)
     @Bean
@@ -92,27 +148,27 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        //获取登录用户信息
-        return username -> {
-            Student stduent = studentService.getStudentByUsername(username);
-            if (stduent != null) {
-                return new StudentUserDetails(stduent);
-            }
-            throw new UsernameNotFoundException("用户名或密码错误");
-        };
-    }
+//    @Bean
+//    public UserDetailsService userDetailsService() {
+//        //获取登录用户信息
+//        return username -> {
+//            Student stduent = studentService.getStudentByUsername(username);
+//            if (stduent != null) {
+//                return new StudentUserDetails(stduent);
+//            }
+//            throw new UsernameNotFoundException("用户名或密码错误");
+//        };
+//    }
 
     @Bean
     public JwtAuthenticationTokenFilter jwtAuthenticationTokenFilter(){
         return new JwtAuthenticationTokenFilter();
     }
 
-    @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
+//    @Bean
+//    @Override
+//    public AuthenticationManager authenticationManagerBean() throws Exception {
+//        return super.authenticationManagerBean();
+//    }
 
 }

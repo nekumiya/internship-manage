@@ -40,9 +40,10 @@ public interface AdminService {
      * 登录功能
      * @param account 账号
      * @param password 密码
+     * @param userType 用户登录类型
      * @return 生成的JWT token
      */
-    Admin login(String account, String password);
+    String login(String account, String password, String userType);
 
     /**
      *  修改个人信息

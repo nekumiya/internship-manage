@@ -1,6 +1,9 @@
 package com.guet.internship.component;
 
 import com.guet.internship.common.utils.JwtTokenUtil;
+import com.guet.internship.dto.CommonUserDetails;
+import com.guet.internship.service.Impl.AdminUserDetailsServiceImpl;
+import com.guet.internship.service.Impl.StudentUserDetailsServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +27,15 @@ import java.io.IOException;
  */
 public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationTokenFilter.class);
+//    @Autowired
+//    private UserDetailsService userDetailsService;
+
     @Autowired
-    private UserDetailsService userDetailsService;
+    private AdminUserDetailsServiceImpl adminUserDetailsService;
+
+    @Autowired
+    private StudentUserDetailsServiceImpl studentUserDetailsService;
+
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
     @Value("${jwt.tokenHeader}")
@@ -41,9 +51,17 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith(this.tokenHead)) {
             String authToken = authHeader.substring(this.tokenHead.length());// The part after "Bearer "
             String username = jwtTokenUtil.getUserNameFromToken(authToken);
+            String userType = jwtTokenUtil.getUserTypeFromToken(authToken);
             LOGGER.info("checking username:{}", username);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                UserDetails userDetails = null;
+                if (userType.equals(CommonUserDetails.STUDENT_INTERNSHIP_TYPE_CODE) || userType.equals(CommonUserDetails.STUDENT_CLASS_TYPE_CODE)) {
+                    userDetails = studentUserDetailsService.loadUserByUsername(username);
+                } else if(userType.equals(CommonUserDetails.ADMIN_TYPE_CODE)) {
+                    userDetails = adminUserDetailsService.loadUserByUsername(username);
+                }
+
+//                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
                 if (jwtTokenUtil.validateToken(authToken, userDetails)) {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

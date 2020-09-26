@@ -41,9 +41,10 @@ public interface StudentService {
      *  登录功能
      * @param account 账号
      * @param password 密码
+     * @param userType
      * @return token
      */
-    String login(String account,String password);
+    String login(String account, String password, String userType);
 
     /**
      *  可根据条件查询自主实习列表
