@@ -430,8 +430,8 @@ public class AdminController {
         return commonResult;
     }
 
-    @ApiOperation("下载文件")
-    @RequestMapping(value = "/downloadFile.do/{id}",method = RequestMethod.POST,produces = "application/json;charset=UTF-8")
+    @ApiOperation(value = "下载文件",produces = "application/octet-stream")
+    @RequestMapping(value = "/downloadFile.do/{id}",method = RequestMethod.POST) //,produces = "application/json;charset=UTF-8"
     public CommonResult downloadFile(@PathVariable("id") Integer id,
                                      HttpServletRequest request,
                                      HttpServletResponse response){
