@@ -121,7 +121,7 @@ public class StudentServiceImpl implements StudentService {
         String token = null;
         UserDetails userDetails = null;
         try {
-            if (userType.equals(CommonUserDetails.STUDENT_CLASS_TYPE_CODE) || userType.equals(CommonUserDetails.STUDENT_INTERNSHIP_TYPE_CODE)){
+            if (userType.equals(CommonUserDetails.STUDENT_CLASS_TYPE_CODE) || userType.equals(CommonUserDetails.STUDENT_INTERNSHIP_TYPE_CODE) || StringsUtils.isEmpty(userType)){
                 Student student = studentMapper.selectByPrimaryKey(account);
                 userDetails = studentDetailsService.loadUserByUsername(student.getName());
             } else if(userType.equals(CommonUserDetails.ADMIN_TYPE_CODE)) {

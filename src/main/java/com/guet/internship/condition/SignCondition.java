@@ -13,6 +13,15 @@ public class SignCondition {
     private Date signIn;
     private String studentId;
     private String adminId;
+    private String time;
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
 
     public Integer getId() {
         return id;

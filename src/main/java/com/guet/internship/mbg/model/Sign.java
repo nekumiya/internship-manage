@@ -17,6 +17,16 @@ public class Sign implements Serializable {
     @ApiModelProperty(value = "管理员编号ID")
     private String adminId;
 
+    private String name;  //学生姓名
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     private static final long serialVersionUID = 1L;
 
     public Integer getId() {
@@ -53,16 +63,12 @@ public class Sign implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getClass().getSimpleName());
-        sb.append(" [");
-        sb.append("Hash = ").append(hashCode());
-        sb.append(", id=").append(id);
-        sb.append(", signIn=").append(signIn);
-        sb.append(", studentId=").append(studentId);
-        sb.append(", adminId=").append(adminId);
-        sb.append(", serialVersionUID=").append(serialVersionUID);
-        sb.append("]");
-        return sb.toString();
+        return "Sign{" +
+                "id=" + id +
+                ", signIn=" + signIn +
+                ", studentId='" + studentId + '\'' +
+                ", adminId='" + adminId + '\'' +
+                ", name='" + name + '\'' +
+                '}';
     }
 }

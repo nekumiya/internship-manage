@@ -130,4 +130,6 @@ public interface AdminService {
     Integer updateInternship(Integer id, Internship internship);
 
     List<Student> selectStudents(StudentCondition studentCondition);
+
+    Student selectStudentById(String studentId);
 }

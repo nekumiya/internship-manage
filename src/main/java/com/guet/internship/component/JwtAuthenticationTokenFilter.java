@@ -1,6 +1,7 @@
 package com.guet.internship.component;
 
 import com.guet.internship.common.utils.JwtTokenUtil;
+import com.guet.internship.common.utils.StringsUtils;
 import com.guet.internship.dto.CommonUserDetails;
 import com.guet.internship.service.Impl.AdminUserDetailsServiceImpl;
 import com.guet.internship.service.Impl.StudentUserDetailsServiceImpl;
@@ -55,7 +56,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
             LOGGER.info("checking username:{}", username);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = null;
-                if (userType.equals(CommonUserDetails.STUDENT_INTERNSHIP_TYPE_CODE) || userType.equals(CommonUserDetails.STUDENT_CLASS_TYPE_CODE)) {
+                if (userType.equals(CommonUserDetails.STUDENT_INTERNSHIP_TYPE_CODE) || userType.equals(CommonUserDetails.STUDENT_CLASS_TYPE_CODE) || StringsUtils.isEmpty(userType)) {
                     userDetails = studentUserDetailsService.loadUserByUsername(username);
                 } else if(userType.equals(CommonUserDetails.ADMIN_TYPE_CODE)) {
                     userDetails = adminUserDetailsService.loadUserByUsername(username);

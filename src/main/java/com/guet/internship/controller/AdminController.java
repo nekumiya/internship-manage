@@ -2,6 +2,7 @@ package com.guet.internship.controller;
 
 import com.guet.internship.common.api.CommonPage;
 import com.guet.internship.common.api.CommonResult;
+import com.guet.internship.common.utils.StringsUtils;
 import com.guet.internship.condition.*;
 import com.guet.internship.dto.CommonUserDetails;
 import com.guet.internship.dto.UserLoginParam;
@@ -31,6 +32,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -335,7 +338,26 @@ public class AdminController {
                                            @RequestParam(value = "pageSize",defaultValue = "5")
                                            @ApiParam("每页数量") Integer pageSize){
 
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        if (StringsUtils.isNotEmpty(healthyReportCondition.getTime())){
+
+            try {
+                Date date = simpleDateFormat.parse(healthyReportCondition.getTime());
+                healthyReportCondition.setReportDate(date);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+        }
         List<HealthyReport> healthyReports = adminService.selectHealthyReport(healthyReportCondition,pageNum,pageSize);
+
+        for (HealthyReport healthyReport : healthyReports) {
+            String studentId = healthyReport.getStudentId();
+            Student student = adminService.selectStudentById(studentId);
+            String name = student.getName();
+            healthyReport.setName(name);
+        }
+
         return CommonResult.success(CommonPage.restPage(healthyReports),"操作成功");
     }
 
@@ -348,7 +370,27 @@ public class AdminController {
                                 @RequestParam(value = "pageSize",defaultValue = "5")
                                 @ApiParam("每页数量") Integer pageSize){
 
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        if (StringsUtils.isNotEmpty(signCondition.getTime())){
+
+            try {
+                Date date = simpleDateFormat.parse(signCondition.getTime());
+                signCondition.setSignIn(date);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+        }
         List<Sign> signs = adminService.selectSign(signCondition,pageNum,pageSize);
+
+        for (Sign sign : signs) {
+            String studentId = sign.getStudentId();
+            Student student = adminService.selectStudentById(studentId);
+            String name = student.getName();
+            sign.setName(name);
+        }
+
+
         return CommonResult.success(CommonPage.restPage(signs),"操作成功");
     }
 
@@ -431,7 +473,7 @@ public class AdminController {
     }
 
     @ApiOperation(value = "下载文件",produces = "application/octet-stream")
-    @RequestMapping(value = "/downloadFile.do/{id}",method = RequestMethod.POST) //,produces = "application/json;charset=UTF-8"
+    @RequestMapping(value = "/downloadFile.do/{id}",method = RequestMethod.GET) //,produces = "application/json;charset=UTF-8"
     public CommonResult downloadFile(@PathVariable("id") Integer id,
                                      HttpServletRequest request,
                                      HttpServletResponse response){

@@ -29,6 +29,17 @@ public class HealthyReport implements Serializable {
     @ApiModelProperty(value = "上报时间")
     private Date reportDate;
 
+
+    private String name; //学生姓名
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     private static final long serialVersionUID = 1L;
 
     public Integer getId() {
@@ -97,20 +108,16 @@ public class HealthyReport implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getClass().getSimpleName());
-        sb.append(" [");
-        sb.append("Hash = ").append(hashCode());
-        sb.append(", id=").append(id);
-        sb.append(", bodyTemperature=").append(bodyTemperature);
-        sb.append(", location=").append(location);
-        sb.append(", isHealth=").append(isHealth);
-        sb.append(", isLocalCov=").append(isLocalCov);
-        sb.append(", studentId=").append(studentId);
-        sb.append(", adminId=").append(adminId);
-        sb.append(", reportDate=").append(reportDate);
-        sb.append(", serialVersionUID=").append(serialVersionUID);
-        sb.append("]");
-        return sb.toString();
+        return "HealthyReport{" +
+                "id=" + id +
+                ", bodyTemperature=" + bodyTemperature +
+                ", location='" + location + '\'' +
+                ", isHealth='" + isHealth + '\'' +
+                ", isLocalCov='" + isLocalCov + '\'' +
+                ", studentId='" + studentId + '\'' +
+                ", adminId='" + adminId + '\'' +
+                ", reportDate=" + reportDate +
+                ", name='" + name + '\'' +
+                '}';
     }
 }

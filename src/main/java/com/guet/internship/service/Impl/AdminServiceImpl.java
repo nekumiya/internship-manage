@@ -31,6 +31,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLEncoder;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -270,11 +272,18 @@ public class AdminServiceImpl implements AdminService {
         PageHelper.startPage(pageNum,pageSize);
         SignExample example = new SignExample();
         SignExample.Criteria criteria = example.createCriteria();
+
         if (condition.getId() != null && condition.getId() != 0){
             criteria.andIdEqualTo(condition.getId());
         }
         if(null != condition.getSignIn()) {
-            criteria.andSignInEqualTo(condition.getSignIn());
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(condition.getSignIn());
+            calendar.add(Calendar.DAY_OF_MONTH,1);
+            Date time = calendar.getTime();
+
+            criteria.andSignInBetween(condition.getSignIn(),time);
         }
         if (StringsUtils.isNotEmpty(condition.getStudentId())){
             criteria.andStudentIdEqualTo(condition.getStudentId());
@@ -418,10 +427,16 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    public Student selectStudentById(String studentId) {
+        return studentMapper.selectByPrimaryKey(studentId);
+    }
+
+    @Override
     public List<HealthyReport> selectHealthyReport(HealthyReportCondition condition, Integer pageNum, Integer pageSize) {
         PageHelper.startPage(pageNum,pageSize);
         HealthyReportExample example = new HealthyReportExample();
         HealthyReportExample.Criteria criteria = example.createCriteria();
+
         if (condition.getId() != null && condition.getId() != 0){
             criteria.andIdEqualTo(condition.getId());
         }
@@ -444,7 +459,13 @@ public class AdminServiceImpl implements AdminService {
             criteria.andAdminIdEqualTo(condition.getAdminId());
         }
         if(null != condition.getReportDate()) {
-            criteria.andReportDateEqualTo(condition.getReportDate());
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(condition.getReportDate());
+            calendar.add(Calendar.DAY_OF_MONTH,1);
+            Date time = calendar.getTime();
+
+            criteria.andReportDateBetween(condition.getReportDate(),time);
         }
         example.setOrderByClause("report_date DESC");
         return healthyReportMapper.selectByExample(example);
