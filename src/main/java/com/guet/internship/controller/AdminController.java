@@ -12,7 +12,7 @@ import com.guet.internship.service.AdminService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
@@ -32,6 +32,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -180,8 +182,6 @@ public class AdminController {
             studentList.add(studentData);
         }
 
-        //TODO 从前端传来的token中获取当前登录用户的ID,而不是从前端传来用户ID
-
         for (Student student : studentList) {
             student.setPassword("123456");
             student.setAdminId(account);
@@ -194,6 +194,73 @@ public class AdminController {
         return CommonResult.success(studentList,"操作成功");
     }
 
+
+    @ApiOperation(value = "导出学生名单",produces = "application/octet-stream")
+    @RequestMapping(value = "/exportExcel.do",method = RequestMethod.GET)
+    public CommonResult downloadExc(StudentCondition studentCondition,HttpServletResponse response) throws IOException {
+        List<Student> studentList = adminService.selectStudents(studentCondition);
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("学生信息表");
+
+        //TODO 当设置文件名为中文会乱码
+        //springboot 将表单的数据导出成excel表格 文件名称中文乱码
+        String fileName = "student" + ".xlsx";  //设置要导出的文件的名字
+
+        //headers 表示excel表中第一行的表头
+        String[] headers = {"学号","姓名","性别","密码","专业","年级","实习类型","实习地点","班级","分数","电话号码","邮箱","管理员"};
+
+        Row titleRow = sheet.createRow(0);   //在excel 表中添加表头
+
+        for (int i=0;i<headers.length;i++){
+            Cell cell = titleRow.createCell(i);
+            cell.setCellValue(headers[i]);
+        }
+
+        //在表中存放数据库中查询到的数据放入对应的列
+        int rowNum = 1;
+        for (Student student : studentList) {
+            Row row = sheet.createRow(rowNum);
+
+            row.createCell(0).setCellValue(student.getAccount());
+            row.createCell(1).setCellValue(student.getName());
+            row.createCell(2).setCellValue(student.getSex());
+            row.createCell(3).setCellValue(student.getPassword());
+            row.createCell(4).setCellValue(student.getMajor());
+            row.createCell(5).setCellValue(student.getGrade());
+            row.createCell(6).setCellValue( student.getIdentify().equals("1") ? "校外实习":"校内实习");
+            row.createCell(7).setCellValue(student.getLocation());
+            row.createCell(8).setCellValue(student.getClassName());
+            row.createCell(9).setCellValue(student.getScore());
+            row.createCell(10).setCellValue(student.getPhone());
+            row.createCell(11).setCellValue(student.getMailbox());
+            row.createCell(12).setCellValue(adminService.getAdminByAccount(student.getAdminId()).getName());
+            rowNum++;
+        }
+
+        //修改样式
+        titleRow.setHeight((short) (22.50 * 20));
+        sheet.setDefaultRowHeight((short) (16.5 * 20));
+
+        CellStyle style2 = workbook.createCellStyle();
+        style2.setFillForegroundColor(IndexedColors.LIGHT_TURQUOISE.getIndex());//背景色
+        style2.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style2.setAlignment(HorizontalAlignment.CENTER);//水平居中　　　　
+        for (int j = 0; j < 13; j++) {
+            sheet.setColumnWidth(j,3500);  //给每一列设置宽度为：3500
+        }
+
+        response.setContentType("application/vnd.ms-excel;charset=utf-8");
+        OutputStream outputStream = response.getOutputStream();
+        response.setHeader("Content-disposition","attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+
+        workbook.write(outputStream);
+        outputStream.flush();
+        outputStream.close();
+
+
+        return CommonResult.success(studentList,"操作成功");
+    }
 
     @ApiOperation("按年级新建自主实习")
     @RequestMapping(value = "/createInternship.do",method = RequestMethod.POST)
