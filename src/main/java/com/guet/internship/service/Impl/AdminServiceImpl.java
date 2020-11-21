@@ -5,6 +5,7 @@ import com.guet.internship.common.utils.JwtTokenUtil;
 import com.guet.internship.common.utils.StringsUtils;
 import com.guet.internship.condition.*;
 import com.guet.internship.dao.DocumentDao;
+import com.guet.internship.dao.SignDao;
 import com.guet.internship.dto.CommonUserDetails;
 import com.guet.internship.mbg.mapper.*;
 import com.guet.internship.mbg.model.*;
@@ -51,6 +52,9 @@ public class AdminServiceImpl implements AdminService {
 
     @Autowired
     private DocumentDao documentDao;
+
+    @Autowired
+    private SignDao signDao;
 
     @Autowired
     private StudentMapper studentMapper;
@@ -270,29 +274,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<Sign> selectSign(SignCondition condition, Integer pageNum, Integer pageSize) {
         PageHelper.startPage(pageNum,pageSize);
-        SignExample example = new SignExample();
-        SignExample.Criteria criteria = example.createCriteria();
-
-        if (condition.getId() != null && condition.getId() != 0){
-            criteria.andIdEqualTo(condition.getId());
-        }
-        if(null != condition.getSignIn()) {
-
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(condition.getSignIn());
-            calendar.add(Calendar.DAY_OF_MONTH,1);
-            Date time = calendar.getTime();
-
-            criteria.andSignInBetween(condition.getSignIn(),time);
-        }
-        if (StringsUtils.isNotEmpty(condition.getStudentId())){
-            criteria.andStudentIdEqualTo(condition.getStudentId());
-        }
-        if (StringsUtils.isNotEmpty(condition.getAdminId())){
-            criteria.andAdminIdEqualTo(condition.getAdminId());
-        }
-        example.setOrderByClause("sign_in DESC");
-        return signMapper.selectByExample(example);
+        return signDao.selectSign(condition);
     }
 
     @Override

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guet.internship.dao.SignDao">
+    <resultMap id="signMap" type="com.guet.internship.mbg.model.Sign" autoMapping="true">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="sign_in" property="signIn" jdbcType="TIMESTAMP"/>
+        <result column="student_id" property="studentId" jdbcType="VARCHAR"/>
+        <result column="admin_id" property="adminId" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="selectSign" parameterType="com.guet.internship.condition.SignCondition" resultType="com.guet.internship.mbg.model.Sign">
+        SELECT
+            id,sign_in,student_id,admin_id
+        FROM
+            sign
+        WHERE
+            id IN (
+                    SELECT
+                        MAX( id )
+                    FROM
+                        (
+                            SELECT
+                                s1.id,s1.sign_in,s1.student_id,s1.admin_id,s2.class_id
+                            FROM
+                                sign s1,student s2
+                            WHERE
+                                s1.student_id = s2.account
+                                AND s1.admin_id = #{adminId}
+                                AND s2.class_id = #{classId}
+                                AND s1.sign_in BETWEEN #{startSign} AND #{endSign}
+                        ) t
+                    GROUP BY student_id
+                  )
+    </select>
+
+
+</mapper>

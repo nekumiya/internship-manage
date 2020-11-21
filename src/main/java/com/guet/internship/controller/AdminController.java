@@ -12,6 +12,7 @@ import com.guet.internship.service.AdminService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.apache.commons.collections.ListUtils;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -228,7 +229,13 @@ public class AdminController {
             row.createCell(3).setCellValue(student.getPassword());
             row.createCell(4).setCellValue(student.getMajor());
             row.createCell(5).setCellValue(student.getGrade());
-            row.createCell(6).setCellValue( student.getIdentify().equals("1") ? "校外实习":"校内实习");
+
+            if(StringsUtils.isNotEmpty(student.getIdentify())){
+                row.createCell(6).setCellValue( student.getIdentify().equals("1") ? "校外实习":"校内实习");
+            } else {
+                row.createCell(6).setCellValue("Null");
+            }
+
             row.createCell(7).setCellValue(student.getLocation());
             row.createCell(8).setCellValue(student.getClassName());
             row.createCell(9).setCellValue(student.getScore());
@@ -437,29 +444,89 @@ public class AdminController {
                                 @RequestParam(value = "pageSize",defaultValue = "5")
                                 @ApiParam("每页数量") Integer pageSize){
 
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        if (StringsUtils.isNotEmpty(signCondition.getTime())){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        if (StringsUtils.isNotEmpty(signCondition.getStartTime()) && StringsUtils.isNotEmpty(signCondition.getEndTime())){
 
             try {
-                Date date = simpleDateFormat.parse(signCondition.getTime());
-                signCondition.setSignIn(date);
+                Date startDate = simpleDateFormat.parse(signCondition.getStartTime());
+                signCondition.setStartSign(startDate);
+
+                Date endDate = simpleDateFormat.parse(signCondition.getEndTime());
+                signCondition.setEndSign(endDate);
+
             } catch (ParseException e) {
                 e.printStackTrace();
             }
 
         }
+
+        String account = getCommonUserDetails().getAccount();
+        signCondition.setAdminId(account);
         List<Sign> signs = adminService.selectSign(signCondition,pageNum,pageSize);
 
+        List<Student> presentList = new ArrayList<>();
         for (Sign sign : signs) {
             String studentId = sign.getStudentId();
             Student student = adminService.selectStudentById(studentId);
+            presentList.add(student);
             String name = student.getName();
             sign.setName(name);
         }
 
+        StudentCondition studentCondition = new StudentCondition();
+        studentCondition.setAdminId(account);
+        studentCondition.setClassId(signCondition.getClassId());
+        List<Student> studentList = adminService.selectStudents(studentCondition);
 
-        return CommonResult.success(CommonPage.restPage(signs),"操作成功");
+        ArrayList<Student> absentList = new ArrayList<>();
+        for (Student student : studentList) {
+            absentList.add(student);
+        }
+
+        for (Student student : studentList) {
+            for (Student student1 : presentList) {
+                if (student1.getAccount().equals(student.getAccount())){
+                    absentList.remove(student);
+                    break;
+                }
+            }
+        }
+
+        HashMap<String, Object> result = new HashMap<>();
+        result.put("presentList",CommonPage.restPage(signs));
+        result.put("studentList",CommonPage.restPage(studentList));
+        result.put("absentList",CommonPage.restPage(absentList));
+
+        return CommonResult.success(result,"操作成功");
     }
+
+//    @ApiOperation("缺勤名单")
+//    @RequestMapping(value = "getAbsentList.do",method = RequestMethod.POST)
+//    @ResponseBody
+//    public CommonResult getAbsentList(SignCondition signCondition,
+//                                      @RequestParam(value = "pageNum",defaultValue = "1")
+//                                      @ApiParam("页码") Integer pageNum,
+//                                      @RequestParam(value = "pageSize",defaultValue = "5")
+//                                      @ApiParam("每页数量") Integer pageSize){
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//        if (StringsUtils.isNotEmpty(signCondition.getStartTime()) && StringsUtils.isNotEmpty(signCondition.getEndTime())){
+//
+//            try {
+//                Date startDate = simpleDateFormat.parse(signCondition.getStartTime());
+//                signCondition.setStartSign(startDate);
+//
+//                Date endDate = simpleDateFormat.parse(signCondition.getEndTime());
+//                signCondition.setEndSign(endDate);
+//
+//            } catch (ParseException e) {
+//                e.printStackTrace();
+//            }
+//
+//        }
+//
+//
+//
+//    }
 
     @ApiOperation("查询学生列表")
     @RequestMapping(value = "/searchStudent.do",method = RequestMethod.POST)
@@ -469,6 +536,8 @@ public class AdminController {
                                       @ApiParam("页码") Integer pageNum,
                                       @RequestParam(value = "pageSize",defaultValue = "5")
                                       @ApiParam("每页数量") Integer pageSize){
+        String account = getCommonUserDetails().getAccount();
+        studentCondition.setAdminId(account);
         List<Student> studentList = adminService.selectStudents(studentCondition,pageNum,pageSize);
         return CommonResult.success(CommonPage.restPage(studentList),"操作成功");
     }
@@ -517,6 +586,8 @@ public class AdminController {
                                            @ApiParam("页码") Integer pageNum,
                                            @RequestParam(value = "pageSize",defaultValue = "5")
                                            @ApiParam("每页数量") Integer pageSize){
+        String account = getCommonUserDetails().getAccount();
+        documentCondition.setAdminId(account);
         List<Document> documents = adminService.selectApplication(documentCondition,pageNum,pageSize);
         return CommonResult.success(CommonPage.restPage(documents),"操作成功");
     }
