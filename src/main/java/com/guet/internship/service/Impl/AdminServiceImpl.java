@@ -6,6 +6,7 @@ import com.guet.internship.common.utils.StringsUtils;
 import com.guet.internship.condition.*;
 import com.guet.internship.dao.DocumentDao;
 import com.guet.internship.dao.SignDao;
+import com.guet.internship.dao.StudentDao;
 import com.guet.internship.dto.CommonUserDetails;
 import com.guet.internship.mbg.mapper.*;
 import com.guet.internship.mbg.model.*;
@@ -22,7 +23,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -55,6 +55,9 @@ public class AdminServiceImpl implements AdminService {
 
     @Autowired
     private SignDao signDao;
+
+    @Autowired
+    private StudentDao studentDao;
 
     @Autowired
     private StudentMapper studentMapper;
@@ -411,6 +414,11 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Student selectStudentById(String studentId) {
         return studentMapper.selectByPrimaryKey(studentId);
+    }
+
+    @Override
+    public List<Student> selectAbsentStudents(List<Student> presentList, Integer classId) {
+        return studentDao.selectAbsentStudents(presentList,classId);
     }
 
     @Override

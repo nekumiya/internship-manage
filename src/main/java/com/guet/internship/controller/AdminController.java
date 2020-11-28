@@ -478,19 +478,8 @@ public class AdminController {
         studentCondition.setClassId(signCondition.getClassId());
         List<Student> studentList = adminService.selectStudents(studentCondition);
 
-        ArrayList<Student> absentList = new ArrayList<>();
-        for (Student student : studentList) {
-            absentList.add(student);
-        }
+        List<Student> absentList = adminService.selectAbsentStudents(presentList,signCondition.getClassId());
 
-        for (Student student : studentList) {
-            for (Student student1 : presentList) {
-                if (student1.getAccount().equals(student.getAccount())){
-                    absentList.remove(student);
-                    break;
-                }
-            }
-        }
 
         HashMap<String, Object> result = new HashMap<>();
         result.put("presentList",CommonPage.restPage(signs));
@@ -500,33 +489,7 @@ public class AdminController {
         return CommonResult.success(result,"操作成功");
     }
 
-//    @ApiOperation("缺勤名单")
-//    @RequestMapping(value = "getAbsentList.do",method = RequestMethod.POST)
-//    @ResponseBody
-//    public CommonResult getAbsentList(SignCondition signCondition,
-//                                      @RequestParam(value = "pageNum",defaultValue = "1")
-//                                      @ApiParam("页码") Integer pageNum,
-//                                      @RequestParam(value = "pageSize",defaultValue = "5")
-//                                      @ApiParam("每页数量") Integer pageSize){
-//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-//        if (StringsUtils.isNotEmpty(signCondition.getStartTime()) && StringsUtils.isNotEmpty(signCondition.getEndTime())){
-//
-//            try {
-//                Date startDate = simpleDateFormat.parse(signCondition.getStartTime());
-//                signCondition.setStartSign(startDate);
-//
-//                Date endDate = simpleDateFormat.parse(signCondition.getEndTime());
-//                signCondition.setEndSign(endDate);
-//
-//            } catch (ParseException e) {
-//                e.printStackTrace();
-//            }
-//
-//        }
-//
-//
-//
-//    }
+
 
     @ApiOperation("查询学生列表")
     @RequestMapping(value = "/searchStudent.do",method = RequestMethod.POST)
