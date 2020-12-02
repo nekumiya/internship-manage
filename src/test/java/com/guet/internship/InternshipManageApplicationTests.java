@@ -19,7 +19,10 @@
 //
 //import java.io.IOException;
 //import java.io.InputStream;
+//import java.text.SimpleDateFormat;
 //import java.util.ArrayList;
+//import java.util.Calendar;
+//import java.util.Date;
 //import java.util.List;
 //
 //@RunWith(SpringRunner.class)
@@ -92,6 +95,24 @@
 //
 //        System.out.println("list = " + list.toString());
 //
+//    }
+//
+//    @Test
+//    public void testCalendar(){
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//
+//        Calendar calendar = Calendar.getInstance();
+//        calendar.set(Calendar.DAY_OF_MONTH,1);
+//        calendar.set(Calendar.HOUR_OF_DAY,0);
+//        calendar.set(Calendar.MINUTE,0);
+//        calendar.set(Calendar.SECOND,0);
+//        Date today = calendar.getTime();
+//
+//        float a = (float) 3/4;
+//        System.out.println("a = " + a);
+//        String format = simpleDateFormat.format(today);
+//
+//        System.out.println("today = " + format);
 //    }
 //
 //}

@@ -8,7 +8,7 @@
 <!--        <result column="admin_id" property="adminId" jdbcType="VARCHAR"/>-->
 <!--    </resultMap>-->
 
-    <select id="selectAbsentStudents" parameterType="list" resultType="com.guet.internship.mbg.model.Student">
+    <select id="selectAbsentStudents" resultType="com.guet.internship.mbg.model.Student">
         SELECT
             *
         FROM
@@ -21,9 +21,14 @@
                     sign
                 <where>
                     student_id IN
-                    <foreach collection="presentList" item="item" separator="," open="(" close=")" index="">
-                        #{item.account}
-                    </foreach>
+                    <if test="presentList != null and presentList.size > 0">
+                        <foreach collection="presentList" item="student" separator="," open="(" close=")" index="">
+                            #{student.account}
+                        </foreach>
+                    </if>
+                    <if test="presentList != null and presentList.size == 0">
+                        (null)
+                    </if>
                 </where>
             ) AS t1 ON student.account = t1.i
         WHERE

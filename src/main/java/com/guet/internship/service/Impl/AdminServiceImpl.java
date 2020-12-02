@@ -417,7 +417,8 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<Student> selectAbsentStudents(List<Student> presentList, Integer classId) {
+    public List<Student> selectAbsentStudents(List<Student> presentList, Integer classId, Integer pageNum, Integer pageSize) {
+        PageHelper.startPage(pageNum,pageSize);
         return studentDao.selectAbsentStudents(presentList,classId);
     }
 

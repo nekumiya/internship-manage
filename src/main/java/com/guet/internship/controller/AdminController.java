@@ -5,6 +5,7 @@ import com.guet.internship.common.api.CommonResult;
 import com.guet.internship.common.utils.StringsUtils;
 import com.guet.internship.condition.*;
 import com.guet.internship.dto.CommonUserDetails;
+import com.guet.internship.dto.SignSituation;
 import com.guet.internship.dto.UserLoginParam;
 import com.guet.internship.mbg.model.*;
 import com.guet.internship.mbg.model.Class;
@@ -469,6 +470,12 @@ public class AdminController {
             String studentId = sign.getStudentId();
             Student student = adminService.selectStudentById(studentId);
             presentList.add(student);
+            ClassCondition classCondition = new ClassCondition();
+            classCondition.setId(student.getClassId());
+            List<Class> classes = adminService.selectClass(classCondition, pageNum, pageSize);
+            if (classes != null && classes.size()>0){
+                sign.setClassName(classes.get(0).getClassName());
+            }
             String name = student.getName();
             sign.setName(name);
         }
@@ -478,7 +485,7 @@ public class AdminController {
         studentCondition.setClassId(signCondition.getClassId());
         List<Student> studentList = adminService.selectStudents(studentCondition);
 
-        List<Student> absentList = adminService.selectAbsentStudents(presentList,signCondition.getClassId());
+        List<Student> absentList = adminService.selectAbsentStudents(presentList,signCondition.getClassId(),pageNum,pageSize);
 
 
         HashMap<String, Object> result = new HashMap<>();
@@ -489,7 +496,76 @@ public class AdminController {
         return CommonResult.success(result,"操作成功");
     }
 
+    @ApiOperation("查看考勤图表（按月）")
+    @RequestMapping(value = "/getSignChart.do",method = RequestMethod.POST)
+    @ResponseBody
+    public CommonResult getSignChart(SignCondition signCondition,
+                                @RequestParam(value = "pageNum",defaultValue = "1")
+                                @ApiParam("页码") Integer pageNum,
+                                @RequestParam(value = "pageSize",defaultValue = "5")
+                                @ApiParam("每页数量") Integer pageSize){
 
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        if (StringsUtils.isNotEmpty(signCondition.getStartTime()) && StringsUtils.isNotEmpty(signCondition.getEndTime())){
+
+            try {
+                Date startDate = simpleDateFormat.parse(signCondition.getStartTime());
+                signCondition.setStartSign(startDate);
+
+                Date endDate = simpleDateFormat.parse(signCondition.getEndTime());
+                signCondition.setEndSign(endDate);
+
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+        }
+        Calendar startCalendar = Calendar.getInstance();
+        Calendar endCalendar = Calendar.getInstance();
+        startCalendar.setTime(signCondition.getStartSign());
+        endCalendar.setTime(signCondition.getEndSign());
+        int lastDay = startCalendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+
+
+        String account = getCommonUserDetails().getAccount();
+        signCondition.setAdminId(account);
+        ArrayList<SignSituation> result = new ArrayList<>();
+
+        for(int i = 1;i < lastDay;i++){
+            startCalendar.set(Calendar.DAY_OF_MONTH,i);
+            signCondition.setStartSign(startCalendar.getTime());
+
+            endCalendar.set(Calendar.DAY_OF_MONTH,i);
+            signCondition.setEndSign(endCalendar.getTime());
+
+            List<Sign> signs = adminService.selectSign(signCondition,pageNum,pageSize);
+
+            List<Student> presentList = new ArrayList<>();
+            for (Sign sign : signs) {
+                String studentId = sign.getStudentId();
+                Student student = adminService.selectStudentById(studentId);
+                presentList.add(student);
+            }
+
+            StudentCondition studentCondition = new StudentCondition();
+            studentCondition.setAdminId(account);
+            studentCondition.setClassId(signCondition.getClassId());
+            List<Student> studentList = adminService.selectStudents(studentCondition);
+
+            List<Student> absentList = adminService.selectAbsentStudents(presentList,signCondition.getClassId(),pageNum,pageSize);
+
+            SignSituation signSituation = new SignSituation();
+            signSituation.setDay(i);
+            signSituation.setPresentNum(signs.size());
+            signSituation.setClassSum(studentList.size());
+            signSituation.setAbsentNum(absentList.size());
+            signSituation.setAttendanceRate((float) signs.size()/studentList.size());
+            result.add(signSituation);
+
+        }
+
+        return CommonResult.success(result,"操作成功");
+    }
 
     @ApiOperation("查询学生列表")
     @RequestMapping(value = "/searchStudent.do",method = RequestMethod.POST)

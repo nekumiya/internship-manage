@@ -1,7 +1,5 @@
 package com.guet.internship.condition;
 
-import io.swagger.annotations.ApiModelProperty;
-
 import java.util.Date;
 
 /**

@@ -133,5 +133,5 @@ public interface AdminService {
 
     Student selectStudentById(String studentId);
 
-    List<Student> selectAbsentStudents(List<Student> presentList, Integer classId);
+    List<Student> selectAbsentStudents(List<Student> presentList, Integer classId, Integer pageNum, Integer pageSize);
 }

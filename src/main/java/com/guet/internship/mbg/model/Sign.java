@@ -19,6 +19,8 @@ public class Sign implements Serializable {
 
     private String name;  //学生姓名
 
+    private String className; //所在实习班级名
+
     public String getName() {
         return name;
     }
@@ -61,6 +63,14 @@ public class Sign implements Serializable {
         this.adminId = adminId;
     }
 
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
+
     @Override
     public String toString() {
         return "Sign{" +
@@ -69,6 +79,7 @@ public class Sign implements Serializable {
                 ", studentId='" + studentId + '\'' +
                 ", adminId='" + adminId + '\'' +
                 ", name='" + name + '\'' +
+                ", className='" + className + '\'' +
                 '}';
     }
 }
